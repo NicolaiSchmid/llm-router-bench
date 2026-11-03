@@ -314,6 +314,7 @@ it("validates native Messages SSE ordering and rejects word-matching impostors",
 			delta: { type: "text_delta", text: "hello" },
 		},
 		{ type: "content_block_stop", index: 0 },
+		{ type: "message_delta", delta: {} },
 		{ type: "message_delta", delta: { stop_reason: "end_turn" } },
 		{ type: "message_stop" },
 	];

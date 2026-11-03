@@ -14,6 +14,7 @@ export async function checkMessagesStream(response: Response) {
 	let started = false,
 		stopped = false,
 		delta = false,
+		stopReason = false,
 		text = false;
 	const active = new Set<number>();
 	const seen = new Set<number>();
@@ -60,12 +61,15 @@ export async function checkMessagesStream(response: Response) {
 			check(active.delete(data.index ?? -1), "stop outside a content block");
 		} else if (data.type === "message_delta") {
 			check(
-				active.size === 0 && !delta && data.delta?.stop_reason,
+				active.size === 0 && data.delta && typeof data.delta === "object",
 				"invalid message_delta",
 			);
 			delta = true;
+			stopReason ||=
+				typeof data.delta?.stop_reason === "string" &&
+				data.delta.stop_reason.length > 0;
 		} else if (data.type === "message_stop") {
-			check(active.size === 0 && delta, "premature message_stop");
+			check(active.size === 0 && delta && stopReason, "premature message_stop");
 			stopped = true;
 		} else check(false, "unexpected message event");
 	}
