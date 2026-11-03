@@ -1,0 +1,9 @@
+llm-router-bench
+Copyright 2026 Nicolai Schmid / MODUS
+
+Conformance checkers and cases extracted with owner authorization from
+NicolaiSchmid/june, apps/gateway/conformance, source commit f41a4ed33.
+The original suite credits Open Responses as inspiration for selected cases.
+No Open Responses source was copied. See upstream/ for scenario provenance.
+Original test code is Apache-2.0; dependencies retain their own licenses.
+Original published measurement data under results/ is CC-BY-4.0.
