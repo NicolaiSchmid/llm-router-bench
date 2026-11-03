@@ -1,0 +1,297 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "runId": {
+      "type": "string"
+    },
+    "start": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+    },
+    "end": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+    },
+    "suiteVersion": {
+      "type": "string"
+    },
+    "suiteCommit": {
+      "type": "string"
+    },
+    "lockfileSha256": {
+      "type": "string"
+    },
+    "caseSetSha256": {
+      "type": "string"
+    },
+    "sdkVersions": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "baseUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "model": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "backend": {
+          "type": "string",
+          "const": "unknown"
+        }
+      },
+      "required": [
+        "provider",
+        "baseUrl",
+        "model",
+        "protocol",
+        "backend"
+      ],
+      "additionalProperties": false
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "suite": {
+          "type": "string",
+          "enum": [
+            "core",
+            "legacy"
+          ]
+        },
+        "repetitions": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "maxRequests": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "maxOutputTokens": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "intervalMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "concurrency": {
+          "type": "number",
+          "const": 1
+        },
+        "retries": {
+          "type": "number",
+          "const": 0
+        },
+        "routePolicy": {
+          "type": "string"
+        },
+        "runner": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "suite",
+        "repetitions",
+        "maxRequests",
+        "maxOutputTokens",
+        "timeoutMs",
+        "intervalMs",
+        "concurrency",
+        "retries",
+        "routePolicy",
+        "runner",
+        "region"
+      ],
+      "additionalProperties": false
+    },
+    "completion": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial",
+        "invalid"
+      ]
+    },
+    "attempts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "caseId": {
+            "type": "string"
+          },
+          "contract": {
+            "type": "string"
+          },
+          "feature": {
+            "type": "string"
+          },
+          "layer": {
+            "type": "string",
+            "enum": [
+              "wire",
+              "sdk"
+            ]
+          },
+          "sdk": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "repetition": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "skipped",
+              "aborted"
+            ]
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "pass",
+                  "fail"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "none",
+              "not_applicable",
+              "unknown",
+              "unsupported",
+              "protocol",
+              "sdk",
+              "behavior",
+              "http_5xx",
+              "rate_limit",
+              "timeout",
+              "transport",
+              "configuration",
+              "budget"
+            ]
+          },
+          "assertion": {
+            "type": "string",
+            "enum": [
+              "positive",
+              "negative",
+              "diagnostic"
+            ]
+          },
+          "ms": {
+            "type": "number",
+            "minimum": 0
+          },
+          "requests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "ms": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "failure": {
+                  "type": "string",
+                  "enum": [
+                    "transport",
+                    "timeout",
+                    "budget"
+                  ]
+                }
+              },
+              "required": [
+                "ms"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "caseId",
+          "contract",
+          "feature",
+          "layer",
+          "sdk",
+          "repetition",
+          "state",
+          "outcome",
+          "category",
+          "assertion",
+          "ms",
+          "requests"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "start",
+    "end",
+    "suiteVersion",
+    "suiteCommit",
+    "lockfileSha256",
+    "caseSetSha256",
+    "sdkVersions",
+    "target",
+    "settings",
+    "completion",
+    "attempts"
+  ],
+  "additionalProperties": false
+}

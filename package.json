@@ -1,0 +1,62 @@
+{
+	"name": "llm-router-bench",
+	"version": "0.1.0",
+	"description": "Reproducible AI API and SDK compatibility benchmarks",
+	"type": "module",
+	"license": "Apache-2.0",
+	"engines": {
+		"node": ">=24"
+	},
+	"bin": {
+		"llm-router-bench": "dist/cli.js"
+	},
+	"files": [
+		"dist",
+		"providers",
+		"upstream",
+		"LICENSE",
+		"NOTICE",
+		"schemas"
+	],
+	"scripts": {
+		"build": "tsc && node scripts/write-provenance.mjs",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run --config vitest.config.ts --pool=threads --maxWorkers=1",
+		"lint": "biome check .",
+		"format": "biome check --write .",
+		"check": "npm run lint && npm run typecheck && npm test && npm run build",
+		"bench": "tsx src/cli.ts",
+		"report": "tsx src/report.ts",
+		"validate:results": "tsx src/validate-results.ts",
+		"schema": "tsx scripts/generate-schema.ts",
+		"prepack": "npm run build"
+	},
+	"dependencies": {
+		"@ai-sdk/anthropic": "4.0.71",
+		"@ai-sdk/openai": "4.0.83",
+		"@ai-sdk/openai-compatible": "3.0.62",
+		"@anthropic-ai/sdk": "1.4.0",
+		"@langchain/anthropic": "1.6.0",
+		"@langchain/core": "^1.1.0",
+		"@langchain/openai": "1.8.0",
+		"ai": "7.0.127",
+		"eventsource-parser": "3.1.1",
+		"openai": "7.45.1",
+		"zod": "4.6.7"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.15",
+		"@types/node": "^24",
+		"tsx": "^4.21.0",
+		"typescript": "7.0.2",
+		"vitest": "^4.0.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/NicolaiSchmid/llm-router-bench.git"
+	},
+	"exports": {
+		".": "./dist/index.js",
+		"./conformance/*": "./dist/conformance/*.js"
+	}
+}
