@@ -76,5 +76,6 @@ export type BenchmarkCase = {
 	sdk: string | null;
 	assertion: Attempt["assertion"];
 	skip?: boolean;
+	invalidCredentials?: boolean;
 	run: () => Promise<void>;
 };

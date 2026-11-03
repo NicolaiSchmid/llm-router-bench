@@ -13,6 +13,7 @@ import { responsesCases } from "./conformance/cases/responses.ts";
 import { post, type Target } from "./conformance/http.ts";
 import { type Case, check } from "./conformance/suite.ts";
 import { BehavioralFailure } from "./measure.ts";
+import { checkMessagesStream } from "./messages-stream.ts";
 import type { BenchmarkCase } from "./model.ts";
 
 const prompt = "Reply with the word hello.";
@@ -36,7 +37,12 @@ export function buildCases(config: Config): BenchmarkCase[] {
 			: c.id.startsWith("client.openai-")
 				? "openai"
 				: null,
-		assertion: legacy ? "diagnostic" : "positive",
+		assertion: c.id.startsWith("errors.")
+			? "negative"
+			: legacy
+				? "diagnostic"
+				: "positive",
+		invalidCredentials: /-(missing|invalid)-key$/.test(c.id),
 		skip: !!c.lacks?.length || !!c.requiresKnownCapabilities || !!c.heavy,
 		run: () => c.run(t),
 	});
@@ -46,7 +52,12 @@ export function buildCases(config: Config): BenchmarkCase[] {
 		if (config.suite === "legacy")
 			selected = [
 				...wire,
-				...errorCases,
+				...errorCases.filter(
+					(c) =>
+						!c.id.includes(
+							config.protocol === "responses" ? ".chat" : ".responses",
+						) && c.id !== "models.list.ids-routable",
+				),
 				...clientCases.filter((c) =>
 					config.protocol === "responses"
 						? c.id.includes("responses")
@@ -105,6 +116,7 @@ export function buildCases(config: Config): BenchmarkCase[] {
 			layer,
 			sdk,
 			run,
+			invalidCredentials: id.endsWith(".invalid-key"),
 			assertion,
 			contract:
 				config.protocol === "messages"
@@ -137,11 +149,7 @@ export function buildCases(config: Config): BenchmarkCase[] {
 			});
 			check(response.status === 200, "native status");
 			if (stream) {
-				const text = await response.text();
-				check(
-					text.includes("message_stop") && text.includes("content_block_delta"),
-					"native stream incomplete",
-				);
+				await checkMessagesStream(response);
 			} else {
 				const b = (await response.json()) as {
 					type?: string;

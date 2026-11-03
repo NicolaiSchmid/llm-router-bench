@@ -86,6 +86,7 @@ export function classify(
 	error: unknown,
 	requests: Attempt["requests"],
 	layer: "wire" | "sdk",
+	invalidCredentials = false,
 ): Attempt["category"] {
 	if (requests.some((r) => r.failure === "budget")) return "budget";
 	if (
@@ -93,7 +94,7 @@ export function classify(
 			(r) => r.status === 401 || r.status === 403 || r.status === 402,
 		)
 	)
-		return "configuration";
+		return invalidCredentials ? "protocol" : "configuration";
 	if (requests.some((r) => r.status === 429)) return "rate_limit";
 	if (requests.some((r) => r.status === 501)) return "unsupported";
 	if (requests.some((r) => (r.status ?? 0) >= 500)) return "http_5xx";
@@ -141,7 +142,7 @@ export async function measure(
 			ms: Math.round(performance.now() - clock),
 		};
 	} catch (error) {
-		const category = classify(error, requests, c.layer);
+		const category = classify(error, requests, c.layer, c.invalidCredentials);
 		return {
 			...base,
 			state: category === "budget" ? "aborted" : "completed",

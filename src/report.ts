@@ -87,8 +87,9 @@ export async function report(root = "results", out = "site") {
 		const r = item.run;
 		const key = JSON.stringify([
 			r.target,
-			r.settings.suite,
-			r.settings.maxOutputTokens,
+			r.settings,
+			r.suiteCommit,
+			r.lockfileSha256,
 			r.caseSetSha256,
 			r.sdkVersions,
 		]);

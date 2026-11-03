@@ -5,7 +5,9 @@ import { ChatOpenAI } from "@langchain/openai";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildCases } from "./cases.ts";
 import { type Config, providers } from "./config.ts";
+import { dependencyVersions } from "./dependency-versions.ts";
 import { instrument, measure } from "./measure.ts";
+import { checkMessagesStream } from "./messages-stream.ts";
 import type { BenchmarkCase, Run } from "./model.ts";
 import { runSchema } from "./model.ts";
 import { metrics, support, wilson } from "./report.ts";
@@ -196,6 +198,34 @@ it("preserves deliberately malformed JSON instead of failing locally", async () 
 		globalThis.fetch = original;
 	}
 });
+it("keeps a deliberately unauthenticated envelope failure in compatibility results", async () => {
+	const original = globalThis.fetch;
+	globalThis.fetch = async () => new Response("not JSON", { status: 401 });
+	const transport = instrument({
+		maxRequests: 1,
+		intervalMs: 0,
+		timeoutMs: 1000,
+		maxOutputTokens: 64,
+	});
+	try {
+		const a = await measure(
+			{
+				...testCase(async () => {
+					await fetch("https://example.com");
+					throw new Error("wrong error envelope");
+				}),
+				invalidCredentials: true,
+				assertion: "negative",
+			},
+			1,
+		);
+		expect(a.category).toBe("protocol");
+		expect(a.outcome).toBe("fail");
+	} finally {
+		transport.restore();
+		globalThis.fetch = original;
+	}
+});
 describe("selection and metrics", () => {
 	it("configures exactly the six agreed providers and LangChain on applicable core surfaces", () => {
 		expect(providers.map((p) => p.id)).toEqual([
@@ -263,4 +293,46 @@ describe("selection and metrics", () => {
 	it("rejects fields outside the publication allowlist", () => {
 		expect(runSchema.safeParse({ serverBody: "secret" }).success).toBe(false);
 	});
+});
+
+it("resolves the installed SDK versions through Node resolution", async () => {
+	const versions = await dependencyVersions([
+		"@langchain/openai",
+		"@anthropic-ai/sdk",
+	]);
+	expect(versions["@langchain/openai"]).toBe("1.8.0");
+	expect(versions["@anthropic-ai/sdk"]).toBe("1.4.0");
+});
+
+it("validates native Messages SSE ordering and rejects word-matching impostors", async () => {
+	const events = [
+		{ type: "message_start", message: { type: "message", role: "assistant" } },
+		{ type: "content_block_start", index: 0 },
+		{
+			type: "content_block_delta",
+			index: 0,
+			delta: { type: "text_delta", text: "hello" },
+		},
+		{ type: "content_block_stop", index: 0 },
+		{ type: "message_delta", delta: { stop_reason: "end_turn" } },
+		{ type: "message_stop" },
+	];
+	const body = events
+		.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`)
+		.join("");
+	await expect(
+		checkMessagesStream(
+			new Response(body, { headers: { "content-type": "text/event-stream" } }),
+		),
+	).resolves.toBeUndefined();
+	await expect(
+		checkMessagesStream(new Response("message_stop content_block_delta")),
+	).rejects.toThrow();
+	await expect(
+		checkMessagesStream(
+			new Response(body + body, {
+				headers: { "content-type": "text/event-stream" },
+			}),
+		),
+	).rejects.toThrow();
 });

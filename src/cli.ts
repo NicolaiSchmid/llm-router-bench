@@ -1,10 +1,12 @@
 #!/usr/bin/env node
+
 import { execFileSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { buildCases } from "./cases.ts";
 import { config, packageRoot } from "./config.ts";
+import { dependencyVersions } from "./dependency-versions.ts";
 import { instrument, measure } from "./measure.ts";
 import { type Run, runSchema } from "./model.ts";
 
@@ -16,16 +18,7 @@ async function main() {
 	const pkg = JSON.parse(
 		await readFile(join(packageRoot, "package.json"), "utf8"),
 	) as { version: string; dependencies: Record<string, string> };
-	const versions: Record<string, string> = {};
-	for (const id of Object.keys(pkg.dependencies)) {
-		const installed = JSON.parse(
-			await readFile(
-				join(packageRoot, "node_modules", id, "package.json"),
-				"utf8",
-			),
-		) as { version: string };
-		versions[id] = installed.version;
-	}
+	const versions = await dependencyVersions(Object.keys(pkg.dependencies));
 	let commit = "unknown",
 		lockfile = "unknown";
 	try {
