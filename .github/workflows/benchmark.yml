@@ -1,0 +1,98 @@
+name: Live benchmark
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        type: choice
+        options: [openai, anthropic, requesty, openrouter, mistral, modus]
+        required: true
+      model:
+        type: string
+        required: true
+      protocol:
+        type: choice
+        options: [chat, responses, messages]
+        default: chat
+      repetitions:
+        type: string
+        default: '1'
+      max_requests:
+        type: string
+        default: '100'
+  schedule:
+    - cron: '17 5 * * 1-6'
+    - cron: '17 5 * * 0'
+permissions:
+  contents: read
+jobs:
+  targets:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.LIVE_BENCHMARKS_ENABLED == 'true')
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.targets.outputs.matrix }}
+      any: ${{ steps.targets.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - id: targets
+        env:
+          INPUT_PROVIDER: ${{ inputs.provider }}
+          INPUT_MODEL: ${{ inputs.model }}
+          INPUT_PROTOCOL: ${{ inputs.protocol }}
+          INPUT_REPETITIONS: ${{ inputs.repetitions }}
+          INPUT_MAX_REQUESTS: ${{ inputs.max_requests }}
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: node scripts/workflow-targets.mjs
+  run:
+    needs: targets
+    if: needs.targets.outputs.any == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.targets.outputs.matrix) }}
+    concurrency:
+      group: live-${{ matrix.provider }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: benchmark
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Run trusted suite
+        env:
+          PROVIDER: ${{ matrix.provider }}
+          MODEL: ${{ matrix.model }}
+          PROTOCOL: ${{ matrix.protocol }}
+          SUITE: ${{ matrix.suite }}
+          REPETITIONS: ${{ matrix.repetitions }}
+          MAX_REQUESTS: ${{ matrix.maxRequests }}
+          OPENAI_API_KEY: ${{ matrix.provider == 'openai' && secrets.OPENAI_API_KEY || '' }}
+          ANTHROPIC_API_KEY: ${{ matrix.provider == 'anthropic' && secrets.ANTHROPIC_API_KEY || '' }}
+          REQUESTY_API_KEY: ${{ matrix.provider == 'requesty' && secrets.REQUESTY_API_KEY || '' }}
+          OPENROUTER_API_KEY: ${{ matrix.provider == 'openrouter' && secrets.OPENROUTER_API_KEY || '' }}
+          MISTRAL_API_KEY: ${{ matrix.provider == 'mistral' && secrets.MISTRAL_API_KEY || '' }}
+          MODUS_API_KEY: ${{ matrix.provider == 'modus' && secrets.MODUS_API_KEY || '' }}
+        run: npm run bench -- --provider "$PROVIDER" --model "$MODEL" --protocol "$PROTOCOL" --suite "$SUITE" --repetitions "$REPETITIONS" --max-requests "$MAX_REQUESTS" --out measurements/results
+      - name: Validate sanitized output
+        if: always()
+        run: npm run validate:results -- measurements/results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-results-${{ strategy.job-index }}-${{ github.run_id }}
+          path: measurements/
+          if-no-files-found: warn
+          retention-days: 30

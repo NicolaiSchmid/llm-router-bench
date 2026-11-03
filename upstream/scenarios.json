@@ -1,0 +1,44 @@
+[
+	{
+		"cases": ["client.langchain.invoke"],
+		"source": "https://github.com/langchain-ai/langchainjs/blob/e95d84fac53e527fc2855cbdade1f98e4de2d103/internal/standard-tests/src/integration_tests/chat_models.ts",
+		"upstreamTest": "testInvoke",
+		"license": "MIT",
+		"adaptation": "Synthetic prompts, configured target/model, bounded output, retries disabled. Offline fixtures exercise actual clients; live assertions consume public SDK results."
+	},
+	{
+		"cases": ["client.langchain.stream"],
+		"source": "https://github.com/langchain-ai/langchainjs/blob/e95d84fac53e527fc2855cbdade1f98e4de2d103/internal/standard-tests/src/integration_tests/chat_models.ts",
+		"upstreamTest": "testStream",
+		"license": "MIT",
+		"adaptation": "Synthetic prompts, configured target/model, bounded output, retries disabled. Offline fixtures exercise actual clients; live assertions consume public SDK results."
+	},
+	{
+		"cases": ["client.langchain.structured"],
+		"source": "https://github.com/langchain-ai/langchainjs/blob/e95d84fac53e527fc2855cbdade1f98e4de2d103/internal/standard-tests/src/integration_tests/chat_models.ts",
+		"upstreamTest": "testWithStructuredOutput",
+		"license": "MIT",
+		"adaptation": "Synthetic prompts, configured target/model, bounded output, retries disabled. Offline fixtures exercise actual clients; live assertions consume public SDK results."
+	},
+	{
+		"cases": ["client.langchain.tool-round-trip"],
+		"source": "https://github.com/langchain-ai/langchainjs/blob/e95d84fac53e527fc2855cbdade1f98e4de2d103/internal/standard-tests/src/integration_tests/chat_models.ts",
+		"upstreamTest": "testToolMessageHistoriesStringContent",
+		"license": "MIT",
+		"adaptation": "Synthetic prompts, configured target/model, bounded output, retries disabled. Offline fixtures exercise actual clients; live assertions consume public SDK results."
+	},
+	{
+		"cases": ["client.openai-chat.stream-tool-call"],
+		"source": "https://github.com/openai/openai-node/blob/272a6dee0dcf77839d205545a7953435201cc684/tests/lib/ChatCompletionStream.test.ts",
+		"upstreamTest": "works; finalization tests",
+		"license": "MIT",
+		"adaptation": "Live stream finalization and tool argument checks; original upstream suite uses scripted chunks. Local checker tests cover missing finish reasons."
+	},
+	{
+		"cases": ["client.anthropic.generate"],
+		"source": "https://github.com/anthropics/anthropic-sdk-typescript/blob/ea8d7de0e47614ae71044fbf7bf12041318ba37e/tests/api-resources/messages/messages.test.ts",
+		"upstreamTest": "create: only required params",
+		"license": "MIT",
+		"adaptation": "Live synthetic prompt plus text assertion; local fixture replay tests the native response through LangChain. No raw-response identity assertions copied."
+	}
+]
